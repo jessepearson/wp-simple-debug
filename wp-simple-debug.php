@@ -10,61 +10,70 @@ Domain Path: /languages/
 Version: 0.0.1
 */
 
-// turn debug logging on
-// define( 'WP_DEBUG', true );
-// define( 'WP_DEBUG_LOG', true );
-// define( 'WP_DEBUG_DISPLAY', false );
-
+/**
+ * Turn debugging on if it's off
+ *
+ * @since 	0.0.1
+ */
 if( ! WP_DEBUG )
 	wpsd_set_wp_debug_true(); 
 
-// if the function doesn't exist, then create it
-if( ! function_exists( 'wpsd_log' ) ) {
+/**
+ * Function that does the logging
+ *
+ * @param 	mixed 	: $data - The data to log. Can be String, Object, Array, etc.
+ * @param 	string 	: $note - If passing a variable to $data and you'd like to pass the variable name as text, or other note. 
+ * @param 	bool 	: $file - Output the file that's calling the function
+ * @param 	bool 	: $line - Output the line number that's calling the function
+ * @param 	bool 	: $full_backtrace - Output the full backgtrace on how the function was called. Will die afterwards due to can create excessive output.
+ * @return 	null
+ * @since 	0.0.1
+ */
+function wpsd_log( $data, $note = '', $file = true, $line = true, $full_backtrace = false ) {
 
-	/**
-	 * Function that does the logging
-	 *
-	 * @param 	mixed 	: $data - The data to log. Can be String, Object, Array.
-	 * @param 	string 	: $name - If passing a variable to $data and you'd like to pass the variable name as text. 
-	 * @return 	null
-	 * @since 	0.0.1
-	 */
-	function wpsd_log( $data, $name = '', $file = true, $line = true, $full_backtrace = false ) {
+	// get our backtrace data
+	$backtrace = debug_backtrace();
 
-		//
-		$backtrace = debug_backtrace();
+	// if we have a full backtrance
+	if( $full_backtrace ) {
 
-		//
-		if( $full_backtrace ) {
-			error_log( print_r( $backtrace, true ) );
-			die( 'killed after full backtrace' );
-		}
-		// 
-		if( $file )
-			error_log( 'file:'. $backtrace[0][ 'file' ] );
+		// output the backtrace data and die
+		error_log( print_r( $backtrace, true ) );
+		die( 'killed after full backtrace' );
+	}
 
-		// 
-		if( $line )
-			error_log( 'line:'. $backtrace[0][ 'line' ] );
+	// if the file path should be output, output it 
+	if( $file )
+		error_log( 'file:'. $backtrace[0][ 'file' ] );
 
-		// if a name is specified, output the name
-		if( $name !== '' || ! is_string( $name ) )
-			error_log( $name .':' );
+	// if the line number should be output, output it
+	if( $line )
+		error_log( 'line:'. $backtrace[0][ 'line' ] );
 
-		// check for an array or object
-		if( is_array( $data ) || is_object( $data ) ) {
+	// if a note is specified, output the note
+	if( $note !== '' || ! is_string( $note ) )
+		error_log( $note .':' );
 
-			// log it
-			error_log( print_r( $data, true ) );
-		} else {
+	// check for an array or object
+	if( is_array( $data ) || is_object( $data ) ) {
 
-			// should be a string, log it
-			error_log( $data );
-		}
+		// log it
+		error_log( print_r( $data, true ) );
+	} else {
+
+		// should be a string, log it
+		error_log( $data );
 	}
 }
 
-// from legolas558 d0t users dot sf dot net at http://www.php.net/is_writable
+/**
+ * Function that checks to make sure we can write to a file
+ *
+ * @param 	string 	: $path - Path to the file we want to test
+ * @return 	bool
+ * @since 	0.0.1
+ * @author 	legolas558 d0t users dot sf dot net at http://www.php.net/is_writable
+ */
 function is_writeable_ACLSafe( $path ) {
 
 	// PHP's is_writable does not work with Win32 NTFS
@@ -85,8 +94,9 @@ function is_writeable_ACLSafe( $path ) {
 }
 
 /**
- * Function that 
+ * Function that will get the lines from the config file
  *
+ * @return 	string|bool 	: The contents of the wp-config.php file. False on error.
  * @since 	0.0.1
  */
 function wpsd_get_config_file() {
@@ -111,8 +121,10 @@ function wpsd_get_config_file() {
 }
 
 /**
- * Function that 
+ * Function that writes new lines to the config file
  *
+ * @param 	string 	: $new_lines - The new content for the file.
+ * @return 	bool 	: true on success, false on error.
  * @since 	0.0.1
  */
 function wpsd_write_config_file( $new_lines ) {
@@ -141,7 +153,7 @@ function wpsd_write_config_file( $new_lines ) {
 }
 
 /**
- * Function that 
+ * Function that sets the debug flag to true
  *
  * @since 	0.0.1
  */
@@ -292,8 +304,10 @@ register_deactivation_hook( __FILE__, 'wpsd_deactivate' );
 register_uninstall_hook( __FILE__, 'wpsd_deactivate' );
 
 /**
- * Function that 
+ * Function that will remove our settings bloc;
  *
+ * @param 	string 	: $lines - The content of the wp-config file.
+ * @return 	string 	: The content with the block of settings removed
  * @since 	0.0.1
  */
 function wpsd_remove_config_settings_section( $lines ) {
@@ -305,7 +319,7 @@ function wpsd_remove_config_settings_section( $lines ) {
 }
 
 /**
- * Function that 
+ * Function that notifies user wp-config has been updated
  *
  * @since 	0.0.1
  */
@@ -319,7 +333,7 @@ function wpsd_notice_update_success() {
 }
 
 /**
- * Function that 
+ * Function that notifies user wp-config cannot be reverted
  *
  * @since 	0.0.1
  */
@@ -345,7 +359,7 @@ function wpsd_error_cannot_revert() {
 }
 
 /**
- * Function that 
+ * Function that notifies user wp-config cannot be found
  *
  * @since 	0.0.1
  */
@@ -365,7 +379,7 @@ function wpsd_error_no_config_file() {
 }
 
 /**
- * Function that 
+ * Function that notifies user wp-config cannot be updated
  *
  * @since 	0.0.1
  */
@@ -383,159 +397,3 @@ function wpsd_error_config_not_writable() {
 		</p>
 	</div>';
 }
-
-
-
-// function wpsupercache_uninstall() {
-// 	global $wp_cache_config_file, $wp_cache_link, $cache_path;
-// 	$files = array( $wp_cache_config_file, $wp_cache_link );
-// 	foreach( $files as $file ) {
-// 		if ( file_exists( $file ) )
-// 			unlink( $file );
-// 	}
-// 	if ( !function_exists( 'wp_cache_debug' ) )
-// 		include_once( 'wp-cache-phase1.php' );
-// 	if ( !function_exists( 'prune_super_cache' ) )
-// 		include_once( 'wp-cache-phase2.php' );
-// 	prune_super_cache( $cache_path, true );
-// 	wp_cache_remove_index();
-// 	@unlink( $cache_path . '.htaccess' );
-// 	@unlink( $cache_path . 'meta' );
-// 	@unlink( $cache_path . 'supercache' );
-// 	wp_clear_scheduled_hook( 'wp_cache_check_site_hook' );
-// 	wp_clear_scheduled_hook( 'wp_cache_gc' );
-// 	wp_clear_scheduled_hook( 'wp_cache_gc_watcher' );
-// 	wp_cache_disable_plugin();
-// 	delete_site_option( 'wp_super_cache_index_detected' );
-// }
-// register_uninstall_hook( __FILE__, 'wpsupercache_uninstall' );
-
-// function wpsupercache_deactivate() {
-// 	global $wp_cache_config_file, $wp_cache_link, $cache_path;
-// 	if ( file_exists( $wp_cache_link ) )
-// 		unlink( $wp_cache_link );
-// 	if ( !function_exists( 'wp_cache_debug' ) )
-// 		include_once( 'wp-cache-phase1.php' );
-// 	if ( !function_exists( 'prune_super_cache' ) )
-// 		include_once( 'wp-cache-phase2.php' );
-// 	prune_super_cache( $cache_path, true );
-// 	wp_cache_remove_index();
-// 	@unlink( $cache_path . '.htaccess' );
-// 	@unlink( $cache_path . 'meta' );
-// 	@unlink( $cache_path . 'supercache' );
-// 	wp_clear_scheduled_hook( 'wp_cache_check_site_hook' );
-// 	wp_clear_scheduled_hook( 'wp_cache_gc' );
-// 	wp_clear_scheduled_hook( 'wp_cache_gc_watcher' );
-// 	wp_cache_replace_line('^ *\$cache_enabled', '$cache_enabled = false;', $wp_cache_config_file);
-// 	wp_cache_disable_plugin( false ); // don't delete configuration file
-// }
-// register_deactivation_hook( __FILE__, 'wpsupercache_deactivate' );
-
-// function wpsupercache_activate() {
-// 	wp_schedule_single_event( time() + 10, 'wp_cache_add_site_cache_index' );
-// }
-// register_activation_hook( __FILE__, 'wpsupercache_activate' );
-
-// function wp_cache_create_advanced_cache() {
-// 	global $wp_cache_link, $wp_cache_file;
-// 	if ( file_exists( ABSPATH . 'wp-config.php') ) {
-// 		$global_config_file = ABSPATH . 'wp-config.php';
-// 	} else {
-// 		$global_config_file = dirname(ABSPATH) . '/wp-config.php';
-// 	}
-
-// 	$line = 'define( \'WPCACHEHOME\', \'' . dirname( __FILE__ ) . '/\' );';
-// 	if ( !is_writeable_ACLSafe($global_config_file) || !wp_cache_replace_line('define *\( *\'WPCACHEHOME\'', $line, $global_config_file ) ) {
-// 			echo '<div id="message" class="updated fade"><h3>' . __( 'Warning', 'wp-super-cache' ) . "! <em>" . sprintf( __( 'Could not update %s!</em> WPCACHEHOME must be set in config file.', 'wp-super-cache' ), $global_config_file ) . "</h3>";
-// 			return false;
-// 	}
-// 	$ret = true;
-
-// 	$file = file_get_contents( $wp_cache_file );
-// 	$fp = @fopen( $wp_cache_link, 'w' );
-// 	if( $fp ) {
-// 		fputs( $fp, $file );
-// 		fclose( $fp );
-// 	} else {
-// 		$ret = false;
-// 	}
-// 	return $ret;
-// }
-
-/*
-function wpsd_replace_line( $find, $replace, $my_file ) {
-
-	// if the file doesn't exist, exit
-	if( @is_file( $my_file ) == false )
-		return false;
-	
-	// is it writable?
-	if( ! is_writeable_ACLSafe( $my_file ) ) {
-
-		// it is not, display error and return
-		echo "Error: file $my_file is not writable.\n";
-		return false;
-	}
-
-	// 
-	$found = false;
-
-	// read in the lines and go through each one
-	$lines = file( $my_file );
-	foreach( (array) $lines as $line ) {
-
-		// do we have a match? 
-	 	if( preg_match( "/$find/", $line ) ) {
-
-	 		// we do, let's go replace it
-			$found = true;
-			break;
-		}
-	}
-
-	// if we have a match
-	if( $found ) {
-
-		// open the file to write, go through each line
-		$fd = fopen($my_file, 'w');
-		foreach( (array) $lines as $line ) {
-
-			// if no match
-			if( ! preg_match( "/$find/", $line ) ) {
-
-				// just put it back where it was
-				fputs( $fd, $line );
-
-			// else we have a match
-			} else {
-
-				// so we replace the line
-				fputs( $fd, "$replace // Line Modified by WP Simple Debug // $find\n");
-			}
-		}
-
-		// close and return
-		fclose($fd);
-		return true;
-	}
-
-	// open the file for writing, set var
-	$fd 	= fopen( $my_file, 'w' );
-	$done 	= false;
-
-	// go through each line
-	foreach( (array) $lines as $line ) {
-
-		// 
-		if ( $done || !preg_match('/^(if\ \(\ \!\ )?define|\$|\?>/', $line) ) {
-			fputs($fd, $line);
-		} else {
-			fputs($fd, "$replace //Added by WP-Cache Manager\n");
-			fputs($fd, $line);
-			$done = true;
-		}
-	}
-	fclose($fd);
-	return true;
-}
-*/
