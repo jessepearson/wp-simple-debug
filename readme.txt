@@ -2,8 +2,8 @@
 Contributors: jessepearson
 Tags: simple, debug log
 Requires at least: 3.7.1
-Tested up to: 4.3.1
-Stable tag: 0.0.1
+Tested up to: 4.4.1
+Stable tag: 1.0.0
 
 License: GPLv2 or later
 
@@ -43,5 +43,12 @@ After installing & activating the plugin...
 
 
 == Changelog ==
+= 1.0.0 =
+* Stable version. 
+
+= 0.0.2 =
+* Added activation hook to place plugin at the top of the "active_plugins" WordPress option so that it is activated first.
+* Updated is_writeable_ACLSafe due to plugin clash.
+
 = 0.0.1 =
 * Initial release

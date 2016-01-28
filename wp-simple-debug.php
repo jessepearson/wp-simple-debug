@@ -7,7 +7,7 @@ Author: Jesse Pearson
 Author URI: https://jessepearson.net/
 Text Domain: wp-simple-debug
 Domain Path: /languages/
-Version: 0.0.1
+Version: 1.0.0
 */
 
 /**
@@ -15,8 +15,9 @@ Version: 0.0.1
  *
  * @since 	0.0.1
  */
-if( ! WP_DEBUG )
+if ( ! WP_DEBUG ) {
 	wpsd_set_wp_debug_true(); 
+}
 
 /**
  * Function that does the logging
@@ -35,7 +36,7 @@ function wpsd_log( $data, $note = '', $file = true, $line = true, $full_backtrac
 	$backtrace = debug_backtrace();
 
 	// if we have a full backtrance
-	if( $full_backtrace ) {
+	if ( $full_backtrace ) {
 
 		// output the backtrace data and die
 		error_log( print_r( $backtrace, true ) );
@@ -43,19 +44,22 @@ function wpsd_log( $data, $note = '', $file = true, $line = true, $full_backtrac
 	}
 
 	// if the file path should be output, output it 
-	if( $file )
+	if ( $file ) {
 		error_log( 'file:'. $backtrace[0][ 'file' ] );
+	}
 
 	// if the line number should be output, output it
-	if( $line )
+	if ( $line ) {
 		error_log( 'line:'. $backtrace[0][ 'line' ] );
+	}
 
 	// if a note is specified, output the note
-	if( $note !== '' || ! is_string( $note ) )
+	if ( $note !== '' || ! is_string( $note ) ){
 		error_log( $note .':' );
+	}
 
 	// check for an array or object
-	if( is_array( $data ) || is_object( $data ) ) {
+	if ( is_array( $data ) || is_object( $data ) ) {
 
 		// log it
 		error_log( print_r( $data, true ) );
@@ -74,22 +78,29 @@ function wpsd_log( $data, $note = '', $file = true, $line = true, $full_backtrac
  * @since 	0.0.1
  * @author 	legolas558 d0t users dot sf dot net at http://www.php.net/is_writable
  */
-function is_writeable_ACLSafe( $path ) {
+function wpsd_is_writeable_ACLSafe( $path ) {
 
 	// PHP's is_writable does not work with Win32 NTFS
 	// recursively return a temporary file path
-	if( $path{ strlen( $path ) -1 } == '/' ) {
-		return is_writeable_ACLSafe( $path . uniqid( mt_rand() ) .'.tmp' );
-	} elseif( is_dir( $path ) ) {
-		return is_writeable_ACLSafe( $path .'/'. uniqid( mt_rand() ) .'.tmp' );
+	if ( $path{ strlen( $path ) -1 } == '/' ) {
+		return wpsd_is_writeable_ACLSafe( $path . uniqid( mt_rand() ) .'.tmp' );
+	} elseif ( is_dir( $path ) ) {
+		return wpsd_is_writeable_ACLSafe( $path .'/'. uniqid( mt_rand() ) .'.tmp' );
 	}
 
 	// check tmp file for read/write capabilities
 	$rm = file_exists( $path );
 	$f 	= @fopen( $path, 'a' );
-	if( $f === false ) return false;
+
+	if ( $f === false ) {
+		return false;
+	}
+
 	fclose( $f );
-	if( !$rm ) unlink( $path) ;
+	if ( ! $rm ) {
+		unlink( $path );
+	}
+
 	return true;
 }
 
@@ -105,13 +116,13 @@ function wpsd_get_config_file() {
 	$config_file = ( file_exists( ABSPATH . 'wp-config.php' ) ) ? ABSPATH . 'wp-config.php' : dirname( ABSPATH ) . '/wp-config.php';
 
 	// if the file doesn't exist, throw error and exit
-	if( @is_file( $config_file ) == false ) {
+	if ( @is_file( $config_file ) == false ) {
 		add_action( 'admin_notices', 'wpsd_error_no_config_file' );
 		return false;
 	}
 	
 	// if not writable, throw error and exit
-	if( ! is_writeable_ACLSafe( $config_file ) ) {
+	if ( ! wpsd_is_writeable_ACLSafe( $config_file ) ) {
 		add_action( 'admin_notices', 'wpsd_error_config_not_writable' );
 		return false;
 	}
@@ -133,13 +144,13 @@ function wpsd_write_config_file( $new_lines ) {
 	$config_file = ( file_exists( ABSPATH . 'wp-config.php' ) ) ? ABSPATH . 'wp-config.php' : dirname( ABSPATH ) . '/wp-config.php';
 
 	// if the file doesn't exist, throw error and exit
-	if( @is_file( $config_file ) == false ) {
+	if ( @is_file( $config_file ) == false ) {
 		add_action( 'admin_notices', 'wpsd_error_no_config_file' );
 		return false;
 	}
 	
 	// if not writable, throw error and exit
-	if( ! is_writeable_ACLSafe( $config_file ) ) {
+	if ( ! wpsd_is_writeable_ACLSafe( $config_file ) ) {
 		add_action( 'admin_notices', 'wpsd_error_config_not_writable' );
 		return false;
 	}
@@ -160,36 +171,38 @@ function wpsd_write_config_file( $new_lines ) {
 function wpsd_set_wp_debug_true() {
 
 	// get the config file
-	if( ! ( $lines = wpsd_get_config_file() ) )
+	if ( ! ( $lines = wpsd_get_config_file() ) ) {
 		return;
+	}
 
 	// are our settings there for some reason?
-	if( preg_match( '/Begin WP Simple Debug/', $lines ) )
+	if ( preg_match( '/Begin WP Simple Debug/', $lines ) ) {
 		$lines = wpsd_remove_config_settings_section( $lines );
+	}
 
 	// is WP_DEBUG_LOG set?
-	if( preg_match_all( '/define\(.*WP_DEBUG_LOG.*\).*;/iU', $lines, $matches ) ) {
+	if ( preg_match_all( '/define\(.*WP_DEBUG_LOG.*\).*;/iU', $lines, $matches ) ) {
 
 		// replace the lines
-		foreach( $matches as $match ) {
+		foreach ( $matches as $match ) {
 			$lines = str_replace( $match[0], '// '. $match[0] .' // Line modified by WP Simple Debug', $lines );
 		}
 	}
 
 	// is WP_DEBUG_DISPLAY set?
-	if( preg_match_all( '/define\(.*WP_DEBUG_DISPLAY.*\).*;/iU', $lines, $matches ) ) {
+	if ( preg_match_all( '/define\(.*WP_DEBUG_DISPLAY.*\).*;/iU', $lines, $matches ) ) {
 
 		// replace the lines
-		foreach( $matches as $match ) {
+		foreach ( $matches as $match ) {
 			$lines = str_replace( $match[0], '// '. $match[0] .' // Line modified by WP Simple Debug', $lines );
 		}
 	}
 
 	// lets add our settings
-	if( preg_match_all( '/define\(.*WP_DEBUG.*false.*\).*;/iU', $lines, $matches ) ) {
+	if ( preg_match_all( '/define\(.*WP_DEBUG.*false.*\).*;/iU', $lines, $matches ) ) {
 
 		// replace the lines
-		foreach( $matches as $match ) {
+		foreach ( $matches as $match ) {
 			$lines = str_replace( $match[0], '// '. $match[0] .' // Line modified by WP Simple Debug', $lines );
 		}
 
@@ -207,7 +220,7 @@ function wpsd_set_wp_debug_true() {
 	}	
 
 	// write to the file
-	if( wpsd_write_config_file( $lines ) ) {
+	if ( wpsd_write_config_file( $lines ) ) {
 
 		// display success
 		add_action( 'admin_notices', 'wpsd_notice_update_success' );
@@ -219,6 +232,35 @@ function wpsd_set_wp_debug_true() {
 }
 
 /**
+ * Function that sets plugin first in activation sequence
+ *
+ * @since 	0.0.2
+ */
+function wpsd_make_us_first() {
+
+	// ensure path to this file is via main wp plugin path
+	$file_path 	= preg_replace( '/(.*)plugins\/(.*)$/', WP_PLUGIN_DIR."/$2", __FILE__ );
+	$wpsd 		= plugin_basename( trim( $file_path ) );
+
+	// get the active plugins, and the key
+	$active_plugins = get_option( 'active_plugins' );
+	$wpsd_key 		= array_search( $wpsd, $active_plugins );
+
+	// if it's 0 it's the first plugin already, no need to continue
+	if ( $wpsd_key ) {
+
+		// take us out, add us back in at the top
+		array_splice( $active_plugins, $wpsd_key, 1 );
+		array_unshift( $active_plugins, $wpsd );
+		
+		// and update the options
+		update_option( 'active_plugins', $active_plugins );
+	}
+}
+// register_activation_hook( __FILE__, 'wpsd_make_us_first', 100 ); // does not work due to activation function sorts the array
+wpsd_make_us_first();
+
+/**
  * Function that undoes what we've done.
  *
  * @since 	0.0.1
@@ -226,18 +268,20 @@ function wpsd_set_wp_debug_true() {
 function wpsd_deactivate() {
 
 	// get the config file
-	if( ! ( $lines = wpsd_get_config_file() ) )
+	if ( ! ( $lines = wpsd_get_config_file() ) ) {
 		return;
+	}
 
 	// remove our settings
-	if( preg_match( '/Begin WP Simple Debug/', $lines ) )
+	if ( preg_match( '/Begin WP Simple Debug/', $lines ) ) {
 		$lines = wpsd_remove_config_settings_section( $lines );
+	}
 
 	// if we have modified lines
-	if( preg_match_all( '/\/\/ (.+) \/\/ Line modified by WP Simple Debug/iU', $lines, $matches ) ) {
+	if ( preg_match_all( '/\/\/ (.+) \/\/ Line modified by WP Simple Debug/iU', $lines, $matches ) ) {
 
 		// if we do not have the same count here, something is wrong
-		if( count( $matches[0] ) !== count( $matches[1] ) ) {
+		if ( count( $matches[0] ) !== count( $matches[1] ) ) {
 
 			// add the error and exit
 			add_action( 'admin_notices', 'wpsd_error_cannot_revert' );
@@ -245,8 +289,8 @@ function wpsd_deactivate() {
 		}
 
 		// go through each match and replace as needed
-		foreach( $matches[0] as $k => $match ) {
-			$lines = str_replace( $match, $matches[ 1 ][ $k ], $lines );
+		foreach ( $matches[0] as $k => $match ) {
+			$lines = str_replace( $match, $matches[1][ $k ], $lines );
 		}
 	}
 
@@ -259,10 +303,10 @@ function wpsd_deactivate() {
 	$its_off 	= false;
 
 	// go through each one
-	foreach( $split as $k => $line ) {
+	foreach ( $split as $k => $line ) {
 
 		// do we have a true statement?
-		if( preg_match( '/^\s*define\(.*WP_DEBUG.*true.*\).*;/iU', $line, $matches ) ) {
+		if ( preg_match( '/^\s*define\(.*WP_DEBUG.*true.*\).*;/iU', $line, $matches ) ) {
 
 			// make it false
 			$lines = str_replace( $line, "define( 'WP_DEBUG', false );", $lines );
@@ -273,7 +317,7 @@ function wpsd_deactivate() {
 		}
 
 		// do we have a false statement?
-		if( preg_match( '/^\s*define\(.*WP_DEBUG.*false.*\).*;/iU', $line, $matches ) ) {
+		if ( preg_match( '/^\s*define\(.*WP_DEBUG.*false.*\).*;/iU', $line, $matches ) ) {
 
 			// it's off
 			$its_off = true;
@@ -282,7 +326,7 @@ function wpsd_deactivate() {
 	}
 
 	// if it's not off, throw error and exit
-	if( ! $its_off ) {
+	if ( ! $its_off ) {
 
 		// add the error and exit
 		add_action( 'admin_notices', 'wpsd_error_cannot_revert' );
@@ -290,7 +334,7 @@ function wpsd_deactivate() {
 	}
 
 	// write to the file
-	if( wpsd_write_config_file( $lines ) ) {
+	if ( wpsd_write_config_file( $lines ) ) {
 
 		// display success
 		add_action( 'admin_notices', 'wpsd_notice_update_success' );
@@ -304,7 +348,7 @@ register_deactivation_hook( __FILE__, 'wpsd_deactivate' );
 register_uninstall_hook( __FILE__, 'wpsd_deactivate' );
 
 /**
- * Function that will remove our settings bloc;
+ * Function that will remove our settings block
  *
  * @param 	string 	: $lines - The content of the wp-config file.
  * @return 	string 	: The content with the block of settings removed
